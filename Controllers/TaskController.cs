@@ -38,13 +38,9 @@ namespace Basic_Task_Manager.Controllers
         [HttpPut("{id}")]
         public ActionResult<TaskItem> UpdateTask(Guid id, TaskUpdateDTO taskDTO)
         {
-            if (string.IsNullOrWhiteSpace(taskDTO.Description))
-                return BadRequest("Description is required!");
-
             if (!tasks.ContainsKey(id))
                 return NotFound();
 
-            tasks[id].Description = taskDTO.Description;
             tasks[id].IsCompleted = taskDTO.IsCompleted;
 
             return Ok(tasks[id]);
@@ -54,9 +50,9 @@ namespace Basic_Task_Manager.Controllers
         public ActionResult DeleteTask(Guid id)
         {
             if (!tasks.TryRemove(id, out _))
-                return NoContent();
+                return NotFound();
 
-            return NotFound();
+            return NoContent();
         }
 
     }
