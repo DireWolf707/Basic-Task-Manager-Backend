@@ -28,5 +28,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowReactApp");
 app.MapControllers();
+app.MapGet("/health", () => Results.Ok());
 app.Run();
 
