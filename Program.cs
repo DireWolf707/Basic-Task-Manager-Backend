@@ -1,5 +1,10 @@
+using Microsoft.EntityFrameworkCore;
+using Basic_Task_Manager.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddDbContext<TaskDbContext>(opt =>
+    opt.UseInMemoryDatabase("TaskListDb"));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();

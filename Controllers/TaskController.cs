@@ -1,56 +1,65 @@
 using System.Collections.Concurrent;
+using Basic_Task_Manager.Data;
 using Basic_Task_Manager.DTOs;
 using Basic_Task_Manager.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Basic_Task_Manager.Controllers
 {
     [ApiController]
     [Route("api/tasks")]
-    public class TaskController : ControllerBase
+    public class TaskController(TaskDbContext context) : ControllerBase
     {
-        private static readonly ConcurrentDictionary<Guid, TaskItem> tasks = new();
+        private readonly TaskDbContext db = context;
 
         [HttpGet]
-        public ActionResult<ICollection<TaskItem>> GetAllTask()
+        public async Task<ActionResult<ICollection<TaskItem>>> GetAllTask()
         {
-            return Ok(tasks.Values);
+            var tasks = await db.Tasks.ToListAsync();
+            return Ok(tasks);
         }
 
         [HttpPost]
-        public ActionResult<TaskItem> CreateTask(TaskCreateDTO taskDTO)
+        public async Task<IActionResult> CreateTask(TaskCreateDTO taskDTO)
         {
             if (string.IsNullOrWhiteSpace(taskDTO.Description))
                 return BadRequest("Description is required!");
 
-            var newTask = new TaskItem
+            var task = new TaskItem
             {
-                Id = Guid.NewGuid(),
                 Description = taskDTO.Description,
                 IsCompleted = false
             };
 
-            tasks[newTask.Id] = newTask;
+            db.Add(task);
+            await db.SaveChangesAsync();
 
-            return Ok(newTask);
+            return NoContent();
         }
 
         [HttpPut("{id}")]
-        public ActionResult<TaskItem> UpdateTask(Guid id, TaskUpdateDTO taskDTO)
+        public async Task<IActionResult> UpdateTask(Guid id, TaskUpdateDTO taskDTO)
         {
-            if (!tasks.ContainsKey(id))
+            var task = await db.Tasks.FindAsync(id);
+            if (task == null)
                 return NotFound();
 
-            tasks[id].IsCompleted = taskDTO.IsCompleted;
+            task.IsCompleted = taskDTO.IsCompleted;
+            await db.SaveChangesAsync();
 
-            return Ok(tasks[id]);
+            return NoContent();
         }
 
         [HttpDelete("{id}")]
-        public ActionResult DeleteTask(Guid id)
+        public async Task<IActionResult> DeleteTask(Guid id)
         {
-            if (!tasks.TryRemove(id, out _))
+            var task = await db.Tasks.FindAsync(id);
+            if (task == null)
                 return NotFound();
+
+            db.Tasks.Remove(task);
+            await db.SaveChangesAsync();
 
             return NoContent();
         }
